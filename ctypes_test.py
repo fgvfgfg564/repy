@@ -7,7 +7,7 @@ from sympy import Point
 import tensorflow as tf
 import numpy as np
 
-clib = CDLL("cpp/libRangeEncoder.so")
+clib = CDLL("cpp/libre.so")
 
 
 class c_BitStream(Structure):
@@ -121,7 +121,8 @@ def test_gaussian():
     while True:
         mu = np.random.random(size=shape[0]) * mu_rng
         sigma = np.random.random(size=shape[0]) * sigma_rng + 0.3
-        latent = np.random.normal(mu, sigma / 6, (shape[1], shape[0]))
+        latent = np.random.normal(mu, sigma, (shape[1], shape[0]))
+        latent = np.clip(latent, mu - 4 * sigma, mu + 4 * sigma)
         latent = np.transpose(latent, (1, 0))
         latent = latent.astype(np.int32)
 
@@ -185,4 +186,4 @@ def test_list():
 
 
 if __name__ == "__main__":
-    test_list()
+    test_gaussian()
