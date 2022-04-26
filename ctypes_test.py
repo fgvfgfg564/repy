@@ -122,7 +122,7 @@ def test_gaussian():
         mu = np.random.random(size=shape[0]) * mu_rng
         sigma = np.random.random(size=shape[0]) * sigma_rng + 0.3
         latent = np.random.normal(mu, sigma, (shape[1], shape[0]))
-        latent = np.clip(latent, mu - 4 * sigma, mu + 4 * sigma)
+        latent = np.clip(latent, mu - 3 * sigma, mu + 3 * sigma)
         latent = np.transpose(latent, (1, 0))
         latent = latent.astype(np.int32)
 
