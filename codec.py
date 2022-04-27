@@ -46,7 +46,7 @@ class CDFTable:
         c_latent = (c_int * (dim1 * dim2))(*latent)
         data = self.f_encode(c_latent, dim1, dim2, pointer(self.get_ctype()))
         array_type = c_char * data.length
-        data_carray = array_type.from_address(data.s)
+        data_carray = array_type.from_address(addressof(data.s.contents))
         data_bytearray = bytearray(data_carray)
         return data_bytearray
 
@@ -56,9 +56,7 @@ class CDFTable:
         array_type = c_char * l
         data_carray = array_type(*data_bytearray)
         data = c_BitStream(l, data_carray)
-        c_latent_recon = self.f_decode(
-            data, self.n, dim2, pointer(self.get_ctype())
-        )
+        c_latent_recon = self.f_decode(data, self.n, dim2, pointer(self.get_ctype()))
         recon = np.ctypeslib.as_array(c_latent_recon, (self.n * dim2,))
         recon = recon.reshape((self.n, dim2))
         return recon
@@ -119,8 +117,13 @@ class GaussianCDFTable(CDFTable):
 
 def encodeGaussian(
     latent: np.array, mu: np.array, sigma: np.array, precision: int = 16
-):
+) -> bytearray:
     cdf = GaussianCDFTable(mu, sigma, precision)
     return cdf.encode(latent)
 
-def decodeGaussian()
+
+def decodeGaussian(
+    data: bytearray, mu: np.array, sigma: np.array, precision: int = 16
+) -> np.np.array:
+    cdf = GaussianCDFTable(mu, sigma, precision)
+    return cdf.decode(data)
