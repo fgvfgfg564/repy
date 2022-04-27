@@ -3,10 +3,12 @@ from math import log2
 from random import randint
 from time import time
 import numpy as np
+import os
 
 from .utils import *
 
-clib = CDLL("cpp/libre.so")
+clib_path = os.path.join(os.path.split(__file__)[0], "cpp/libre.so")
+clib = CDLL(clib_path)
 
 
 class c_BitStream(Structure):
@@ -96,10 +98,11 @@ class ListCDFTable(CDFTable):
 
 class GaussianCDFTable(CDFTable):
     def __init__(self, mu, sigma, precision=16):
-        checkDimension(mu, 2)
-        checkDimension(sigma, 2)
+        checkDimension(mu, 1)
+        checkDimension(sigma, 1)
         checkDimensionMatch(mu, sigma, 0)
-        checkDimensionMatch(mu, sigma, 1)
+        mu = mu.astype(np.float64)
+        sigma = sigma.astype(np.float64)
         self.precision = precision
         self.n = mu.shape[0]
         self.mu = np.ctypeslib.as_ctypes(mu)
@@ -123,7 +126,7 @@ def encodeGaussian(
 
 
 def decodeGaussian(
-    data: bytearray, mu: np.array, sigma: np.array, precision: int = 16
-) -> np.np.array:
+    data: bytearray, length, mu: np.array, sigma: np.array, precision: int = 16
+) -> np.array:
     cdf = GaussianCDFTable(mu, sigma, precision)
-    return cdf.decode(data)
+    return cdf.decode(data, length)
