@@ -1,10 +1,7 @@
 from ctypes import *
 from math import log2
 from random import randint
-from time import localtime, time
-from tkinter.messagebox import NO
-from sympy import Point
-import tensorflow as tf
+from time import time
 import numpy as np
 
 clib = CDLL("cpp/libre.so")
@@ -45,13 +42,19 @@ class CDFTable:
             raise ValueError(f"Dimensions mismatch! Got {dim1} vs. self.n={self.n}")
         latent = latent.reshape((-1,))
         c_latent = (c_int * (dim1 * dim2))(*latent)
-        return self.f_encode(c_latent, dim1, dim2, pointer(self.get_ctype()))
+        data = self.f_encode(c_latent, dim1, dim2, pointer(self.get_ctype()))
+        array_type = c_char * data.length
+        data_carray = array_type.from_address(addressof(data.s.contents))
+        data_bytearray = bytearray(data_carray)
+        return data_bytearray
 
-    def decode(self, bitstream: c_BitStream, dim2):
+    def decode(self, data_bytearray: bytearray, dim2):
         self.f_decode.restype = POINTER(c_int)
-        c_latent_recon = self.f_decode(
-            bitstream, self.n, dim2, pointer(self.get_ctype())
-        )
+        l = len(data_bytearray)
+        array_type = c_char * l
+        data_carray = array_type(*data_bytearray)
+        data = c_BitStream(l, data_carray)
+        c_latent_recon = self.f_decode(data, self.n, dim2, pointer(self.get_ctype()))
         recon = np.ctypeslib.as_array(c_latent_recon, (self.n * dim2,))
         recon = recon.reshape((self.n, dim2))
         return recon
@@ -107,7 +110,7 @@ def test(latent, cdf):
     decode_time = time()
     return (
         np.all(latent == recon),
-        result.length,
+        len(result),
         decode_time - encode_time,
         encode_time - start_time,
     )
@@ -122,7 +125,9 @@ def test_gaussian():
         mu = np.random.random(size=shape[0]) * mu_rng
         sigma = np.random.random(size=shape[0]) * sigma_rng + 0.3
         latent = np.random.normal(mu, sigma, (shape[1], shape[0]))
-        latent = np.clip(latent, mu - 3 * sigma, mu + 3 * sigma)
+        clip_min = np.ceil(mu - 6 * sigma)
+        clip_max = np.floor(mu + 6 * sigma)
+        latent = np.clip(latent, clip_min, clip_max)
         latent = np.transpose(latent, (1, 0))
         latent = latent.astype(np.int32)
 

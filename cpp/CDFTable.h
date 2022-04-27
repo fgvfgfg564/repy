@@ -92,15 +92,24 @@ public:
     GaussianCDFTable(int n, int precision, double mu[], double sigma[]): 
         CDFTable(n, precision), _mu(mu), _sigma(sigma) {}
     GaussianCDFTable(const GaussianCDFTableRaw &raw): CDFTable(raw._n, raw._precision), _mu(raw._mu), _sigma(raw._sigma) {}
+
     int operator()(int idx, int x) const {
         if(idx < 0 || idx >= _n){
             cerr << "CDF table index out of range: " << idx << endl;
             exit(-1);
         }
+        int actual_min = floor(_mu[idx] - 6 * _sigma[idx]);
+        int actual_max = ceil(_mu[idx] + 6 * _sigma[idx]);
+        if (x < actual_min || x > actual_max) {
+            cerr << "Gaussian value out of range: " << x << endl;
+            exit(-1);
+        }
+        int multiplier = (1 << _precision) - (actual_max - actual_min + 1);
         double x_new = (x - 0.5 - _mu[idx]) / _sigma[idx];
-        double cdf = normalCDF(x_new) * (1 << _precision);
-        return round(cdf);
+        double cdf = normalCDF(x_new) * multiplier;
+        return round(cdf) + x - actual_min;
     }
+
     int lookup(int idx, int prob) const {
         if(prob < 0 || prob > (1 << _precision)) {
             cerr << "Invalid prob: " << prob << endl;
