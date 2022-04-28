@@ -6,4 +6,3 @@ pip install -r requirements.txt
 cd cpp
 make clean && make
 ```
-## Usage
