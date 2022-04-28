@@ -1,7 +1,7 @@
 from ctypes import *
 from math import log2
 from random import randint
-from time import time
+import time
 import numpy as np
 import os
 
@@ -45,8 +45,10 @@ class CDFTable:
         if dim1 != self.n:
             raise ValueError(f"Dimensions mismatch! Got {dim1} vs. self.n={self.n}")
         latent = latent.reshape((-1,))
-        c_latent = (c_int * (dim1 * dim2))(*latent)
+        c_latent = np.ctypeslib.as_ctypes(latent)
+        t = time.time()
         data = self.f_encode(c_latent, dim1, dim2, pointer(self.get_ctype()))
+        print("encode_time =", time.time() - t)
         array_type = c_char * data.length
         data_carray = array_type.from_address(addressof(data.s.contents))
         data_bytearray = bytearray(data_carray)
@@ -58,7 +60,9 @@ class CDFTable:
         array_type = c_char * l
         data_carray = array_type(*data_bytearray)
         data = c_BitStream(l, data_carray)
+        t = time.time()
         c_latent_recon = self.f_decode(data, self.n, dim2, pointer(self.get_ctype()))
+        print("decode_time =", time.time() - t)
         recon = np.ctypeslib.as_array(c_latent_recon, (self.n * dim2,))
         recon = recon.reshape((self.n, dim2))
         return recon
