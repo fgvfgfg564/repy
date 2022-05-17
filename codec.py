@@ -69,6 +69,9 @@ class CDFTable:
 
 
 class ListCDFTable(CDFTable):
+    """
+    Data structure to maintain a listed entropy bottleneck
+    """
     def __init__(
         self, cdf: np.array, maxv: np.array, minv: np.array, precision: int = 16
     ):
@@ -101,6 +104,9 @@ class ListCDFTable(CDFTable):
 
 
 class GaussianCDFTable(CDFTable):
+    """
+    Data structure to maintain a gaussian entropy bottleneck
+    """
     def __init__(self, mu, sigma, precision=16):
         checkDimension(mu, 1)
         checkDimension(sigma, 1)
@@ -125,6 +131,9 @@ class GaussianCDFTable(CDFTable):
 def encodeGaussian(
     latent: np.array, mu: np.array, sigma: np.array, precision: int = 16
 ) -> bytearray:
+    """
+    Encode a gaussian entropy bottleneck
+    """
     cdf = GaussianCDFTable(mu, sigma, precision)
     return cdf.encode(latent)
 
@@ -132,5 +141,8 @@ def encodeGaussian(
 def decodeGaussian(
     data: bytearray, length, mu: np.array, sigma: np.array, precision: int = 16
 ) -> np.array:
+    """
+    Decode a gaussian entropy bottleneck
+    """
     cdf = GaussianCDFTable(mu, sigma, precision)
     return cdf.decode(data, length)
