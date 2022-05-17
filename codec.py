@@ -43,7 +43,7 @@ class CDFTable:
         self.f_encode.restype = c_BitStream
         dim1, dim2 = latent.shape
         if dim1 != self.n:
-            raise ValueError(f"Dimensions mismatch! Got {dim1} vs. self.n={self.n}")
+            raise ValueError(f"Dimensions mismatch in dim0! Got {dim1} vs. self.n={self.n}")
         latent = latent.reshape((-1,))
         c_latent = np.ctypeslib.as_ctypes(latent)
         t = time.time()
