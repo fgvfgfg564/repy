@@ -72,6 +72,7 @@ class ListCDFTable(CDFTable):
     """
     Data structure to maintain a listed entropy bottleneck
     """
+
     def __init__(
         self, cdf: np.array, maxv: np.array, minv: np.array, precision: int = 16
     ):
@@ -107,6 +108,7 @@ class GaussianCDFTable(CDFTable):
     """
     Data structure to maintain a gaussian entropy bottleneck
     """
+
     def __init__(self, mu, sigma, precision=16):
         checkDimension(mu, 1)
         checkDimension(sigma, 1)
