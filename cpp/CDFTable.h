@@ -61,7 +61,7 @@ public:
             cerr << "CDF table index out of range: " << idx << endl;
             exit(-1);
         }
-        if(x < _minv[idx] || x > _maxv[idx]) {
+        if(x < _minv[idx] || x > _maxv[idx] + 1) {
             cerr << "Index out of range: " << x << " in [" << _minv[idx] << "," << _maxv[idx] << "]" << endl;
             exit(-1);
         }

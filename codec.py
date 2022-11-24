@@ -102,7 +102,7 @@ class ListCDFTable(CDFTable):
     """
 
     def __init__(
-        self, cdf: np.array, maxv: np.array, minv: np.array, precision: int = 16
+        self, cdf: np.array, minv: np.array, maxv: np.array, precision: int = 16
     ):
         checkDimension(cdf, 2)
         checkDimension(minv, 1)
