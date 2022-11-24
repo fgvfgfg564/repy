@@ -33,7 +33,8 @@ public:
     _cdf[0] = P(x<0) * 2^precision = 0
     _cdf[1] = P(x<1) * 2^precision
     ...
-    _cdf[len-1] = P(x<len-1) * 2^precision = 2 ^ precision
+    _cdf[len-2] = P(x<maxv) * 2^precision
+    _cdf[len-1] = P(x<maxv+1) * 2^precision = 2 ^ precision
 
     the length of _cdf equals to maxv - minv + 2
  */
@@ -60,7 +61,7 @@ public:
             cerr << "CDF table index out of range: " << idx << endl;
             exit(-1);
         }
-        if(x < _minv[idx] || x > _maxv[idx] + 1) {
+        if(x < _minv[idx] || x > _maxv[idx]) {
             cerr << "Index out of range: " << x << " in [" << _minv[idx] << "," << _maxv[idx] << "]" << endl;
             exit(-1);
         }
