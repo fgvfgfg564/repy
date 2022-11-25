@@ -77,7 +77,7 @@ void testGaussian(int n, double mu_range, double sigma_range, int p) {
         double *sigma = new double[n];
         for(int i=0;i<n;i++) {
             mu[i] = 1.0 * (rand() & 0xffff) / 0x10000 * mu_range;
-            sigma[i] = 1.0 * (rand() & 0xffff) / 0x10000 * sigma_range + 0.3;
+            sigma[i] = 1.0 * (rand() & 0xffff) / 0x10000 * sigma_range + 0.11;
         }
         GaussianCDFTable table(n, p, mu, sigma);
         // cout << sigma[0] << endl;
@@ -88,8 +88,8 @@ void testGaussian(int n, double mu_range, double sigma_range, int p) {
         //     cout << table.lookup(2, i) << endl;
         // }
         for(int i=0;i<n;i++) {
-            int mi = ceil(mu[i] - 3 * sigma[i]);
-            int mx = floor(mu[i] + 3 * sigma[i]);
+            int mi = floor(mu[i] - 6 * sigma[i]);
+            int mx = ceil(mu[i] + 6 * sigma[i]);
             a[i] = mi + rand() % (mx - mi + 1);
         }
         if(test(a, n, 1, &table)) {
@@ -105,5 +105,5 @@ void testGaussian(int n, double mu_range, double sigma_range, int p) {
 int main()
 {
     // testList(5, 5, 3, 4);
-    testGaussian(10000, 10000, 3, 16);
+    testGaussian(10000, 0, 0, 16);
 }

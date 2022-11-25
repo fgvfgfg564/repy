@@ -189,7 +189,7 @@ class GaussianCDFTable(CDFTable):
         inputs = super().checkData(inputs)
         inputs = inputs.transpose()
         minv = np.floor(self.mu - 6*self.sigma)
-        maxv = np.ceiling(self.mu + 6*self.sigma)
+        maxv = np.ceil(self.mu + 6*self.sigma)
         less = np.less(inputs, minv)
         greater = np.greater(inputs, maxv)
         num_modifies = np.sum(less) + np.sum(greater)

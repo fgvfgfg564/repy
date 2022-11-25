@@ -99,16 +99,17 @@ public:
             cerr << "CDF table index out of range: " << idx << endl;
             exit(-1);
         }
-        int actual_min = floor(_mu[idx] - 6 * _sigma[idx]);
-        int actual_max = ceil(_mu[idx] + 6 * _sigma[idx]);
-        if (x < actual_min || x > actual_max) {
+        int minv = floor(_mu[idx] - 6 * _sigma[idx]);
+        int maxv = ceil(_mu[idx] + 6 * _sigma[idx]);
+        if (x < minv || x > maxv + 1) {
             cerr << "Gaussian value out of range: " << x << endl;
+            cerr << " - mu = " << _mu[idx] << "; sigma = " << _sigma[idx] << "." << endl;
             exit(-1);
         }
-        int multiplier = (1 << _precision) - (actual_max - actual_min + 1);
+        int multiplier = (1 << _precision) - (maxv - minv + 1);
         double x_new = (x - 0.5 - _mu[idx]) / _sigma[idx];
         double cdf = normalCDF(x_new) * multiplier;
-        return round(cdf) + x - actual_min;
+        return round(cdf) + x - minv;
     }
 
     int lookup(int idx, int prob) const {
@@ -116,9 +117,12 @@ public:
             cerr << "Invalid prob: " << prob << endl;
             exit(-1);
         }
+        
+        int minv = floor(_mu[idx] - 6 * _sigma[idx]);
+        int maxv = ceil(_mu[idx] + 6 * _sigma[idx]);
 
-        int l = floor(_mu[idx] - 6*_sigma[idx]);
-        int r = ceil(_mu[idx] + 6*_sigma[idx]);
+        int l = minv;
+        int r = maxv + 2;
         while(l < r - 1) {
             int mid = (l+r) >> 1;
             if((*this)(idx, mid) > prob) r = mid;
