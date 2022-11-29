@@ -51,9 +51,7 @@ class CDFTable:
             raise ValueError(f"Dimensions mismatch in dim0! Got {dim0} vs. self.num_channels={self.num_channels}")
         latent = latent.reshape((-1,))
         c_latent = np.ctypeslib.as_ctypes(latent)
-        t = time.time()
         data = self.f_encode(c_latent, dim0, dim1, pointer(self.get_ctype()))
-        print("encode_time =", time.time() - t)
         array_type = c_char * data.length
         data_carray = array_type.from_address(addressof(data.s.contents))
         data_bytearray = bytearray(data_carray)
@@ -65,9 +63,7 @@ class CDFTable:
         array_type = c_char * l
         data_carray = array_type(*data_bytearray)
         data = c_BitStream(l, data_carray)
-        t = time.time()
         c_latent_recon = self.f_decode(data, self.num_channels, dim1, pointer(self.get_ctype()))
-        print("decode_time =", time.time() - t)
         recon = np.ctypeslib.as_array(c_latent_recon, (self.num_channels * dim1,))
         recon = recon.reshape((self.num_channels, dim1))
         return recon
