@@ -75,7 +75,7 @@ public:
             exit(-1);
         }
         int *cdf = _cdf + _max_cdf_length * idx;
-        return upper_bound(cdf, cdf + _max_cdf_length, prob) - cdf - 1 + _minv[idx];
+        return upper_bound(cdf, cdf + (_maxv[idx] - _minv[idx] + 2), prob) - cdf - 1 + _minv[idx];
     }
 };
 

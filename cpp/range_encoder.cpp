@@ -135,6 +135,7 @@ BitStream encode_single_channel(int latent[], int dim1, int dim2, const CDFTable
             int val = latent[idx * dim2 + i];
             int prob_start = cdf(idx, val);
             int prob_end = cdf(idx, val+1);
+            // cout << start << ' ' << range << ' ' << prob_start << ' ' << prob_end << endl;
             start = start + ceiling_div(1ll * range * prob_start, prob_base);
             range = ceiling_div(1ll * range * prob_end, prob_base) - ceiling_div(1ll * range * prob_start, prob_base);
             
@@ -204,13 +205,12 @@ const int* decode_single_channel(BitStream msg_stream, int dim1, int dim2, const
         for(int i=0;i<dim2;i++) {
             int prob = (1ll * (cur - start) * prob_base) / range;
             int val = cdf.lookup(idx, prob);
+            // cout << start << ' ' << range << ' ' << prob << ' ' << val << endl;
             result.push_back(val);
             int prob_start = cdf(idx, val);
             int prob_end = cdf(idx, val+1);
-            // cout<<prob<<'-'<<start<<','<<prob<<','<<range<<endl;
             start = start + ceiling_div(1ll * range * prob_start, prob_base);
             range = ceiling_div(1ll * range * prob_end, prob_base) - ceiling_div(1ll * range * prob_start, prob_base);
-            // cout<<prob<<' '<<start<<'|'<<prob<<'|'<<range<<endl;
             emit_bits(false);
             align_range(prob_safe, false);
         }

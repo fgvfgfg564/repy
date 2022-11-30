@@ -55,10 +55,10 @@ class CDFTable:
         data = self.f_encode(c_latent, dim0, dim1, pointer(self.get_ctype()))
         array_type = c_char * data.length
         data_carray = array_type.from_address(addressof(data.s.contents))
-        data_bytearray = bytearray(data_carray)
+        data_bytearray = bytes(data_carray)
         return data_bytearray
 
-    def decode(self, data_bytearray: bytearray, dim1):
+    def decode(self, data_bytearray: bytes, dim1):
         print("Decoding")
         self.f_decode.restype = POINTER(c_int)
         l = len(data_bytearray)
@@ -115,8 +115,9 @@ class ListCDFTable(CDFTable):
         self.precision = precision
         self.num_channels = cdf.shape[0]
         self.max_cdf_length = cdf.shape[1]
+        self.cdf = cdf
         cdf = np.reshape(cdf, [-1])
-        self.cdf = np.ctypeslib.as_ctypes(cdf)
+        self.cdf_c = np.ctypeslib.as_ctypes(cdf)
         self.maxv = maxv
         self.minv = minv
         self.maxv_c = np.ctypeslib.as_ctypes(maxv)
@@ -131,7 +132,7 @@ class ListCDFTable(CDFTable):
         return c_ListCDFTable(
             self.precision,
             self.num_channels,
-            self.cdf,
+            self.cdf_c,
             self.maxv_c,
             self.minv_c,
             self.max_cdf_length,
@@ -202,7 +203,7 @@ class GaussianCDFTable(CDFTable):
 
 def encodeGaussian(
     latent: np.array, mu: np.array, sigma: np.array, precision: int = 16
-) -> bytearray:
+) -> bytes:
     """
     Encode a gaussian entropy bottleneck
     """
@@ -211,7 +212,7 @@ def encodeGaussian(
 
 
 def decodeGaussian(
-    data: bytearray, length, mu: np.array, sigma: np.array, precision: int = 16
+    data: bytes, length, mu: np.array, sigma: np.array, precision: int = 16
 ) -> np.array:
     """
     Decode a gaussian entropy bottleneck
