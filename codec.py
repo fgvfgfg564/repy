@@ -44,7 +44,6 @@ class CDFTable:
         """
         Input shape: [num_channels, num_elements_per_channel]
         """
-        print("Encoding")
         latent = self.checkData(latent)
         self.f_encode.restype = c_BitStream
         dim0, dim1 = latent.shape
@@ -59,7 +58,6 @@ class CDFTable:
         return data_bytearray
 
     def decode(self, data_bytearray: bytes, dim1):
-        print("Decoding")
         self.f_decode.restype = POINTER(c_int)
         l = len(data_bytearray)
         array_type = c_char * l
