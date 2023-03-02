@@ -7,8 +7,6 @@ using namespace std;
 #define C 1024
 #define P 16
 
-int a[N];
-
 bool test(int *a, int dim1, int dim2, CDFTable *table) {
     int n = dim1 * dim2;
     cout << "Generated!" << endl;
@@ -27,6 +25,7 @@ void testList(int dim1, int dim2, int c, int p) {
     int *cdf = new int[dim1 * c];
     int *minv = new int[dim1];
     int *maxv = new int[dim1];
+    int *a = new int[dim1*dim2];
 
     for(;;){
         for(int idx = 0;idx<dim1;idx++){
@@ -74,9 +73,10 @@ void testList(int dim1, int dim2, int c, int p) {
 
 void testGaussian(int n, double mu_range, double sigma_range, int p) {
     cout << "Testing performance on Gaussian Distributions ... " << endl;
+    double *mu = new double[n];
+    double *sigma = new double[n];
+    int *a = new int[n];
     for(;;) {
-        double *mu = new double[n];
-        double *sigma = new double[n];
         for(int i=0;i<n;i++) {
             mu[i] = 1.0 * (rand() & 0xffff) / 0x10000 * mu_range;
             sigma[i] = 1.0 * (rand() & 0xffff) / 0x10000 * sigma_range + 0.11;
@@ -107,5 +107,5 @@ void testGaussian(int n, double mu_range, double sigma_range, int p) {
 int main()
 {
     // testList(5, 5, 3, 4);
-    testGaussian(10000, 10000, 100, 16);
+    testGaussian(10000000, 10000, 100, 16);
 }

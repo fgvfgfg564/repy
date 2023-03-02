@@ -1,7 +1,6 @@
 #ifndef _H_RANGE_ENCODER_
 #define _H_RANGE_ENCODER_
 
-#define SAFETY_BITS 0
 #define OUTPUT_BITS 13
 
 #include <bits/stdc++.h>
