@@ -12,7 +12,6 @@ inline void read_bit(int &cur, BitStreamDynamic &bits, int first_bit_base) {
 // 若range开头结尾的首个bit一致，则将其输出(encode)/读入下一位(decode)并整体左移一位
 void emit_initio_bits(int &start, int &range, int &cur, BitStreamDynamic &bits, int first_bit_base, bool encoding) {
     while(start / first_bit_base == (start + range - 1) / first_bit_base) {
-        // cout << start << ' ' << range << ' ' << first_bit_base << endl;
         int bit = start / first_bit_base;
         start = (start & (first_bit_base - 1)) << 1;
         range <<= 1;
@@ -55,7 +54,6 @@ BitStreamDynamic encode_single_channel(int latent[], int dim1, int dim2, const C
             int val = latent[idx * dim2 + i];
             int prob_start = cdf(idx, val);
             int prob_end = cdf(idx, val+1);
-            // cout << start << ' ' << range << ' ' << prob_start << ' ' << prob_end << endl;
             start = start + 1ll * range * prob_start / prob_base;
             range = 1ll * range * prob_end / prob_base - 1ll * range * prob_start / prob_base;
             
@@ -85,13 +83,10 @@ vector<int> decode_single_channel(BitStreamDynamic msg, int dim1, int dim2, cons
         read_bit(cur, msg, first_bit_base);
         range <<= 1;
     }
-    // cout<<"cur="<<cur<<endl;
     for(int idx=0;idx<dim1;idx++) {
-        // cout <<idx << endl;
         for(int i=0;i<dim2;i++) {
             int prob = (1ll * (cur - start + 1) * prob_base - 1) / range;
             int val = cdf.lookup(idx, prob);
-            // cout << start << ' ' << range << ' ' << cur << ' ' << prob << ' ' << val << endl;
             result.push_back(val);
             int prob_start = cdf(idx, val);
             int prob_end = cdf(idx, val+1);
@@ -103,31 +98,3 @@ vector<int> decode_single_channel(BitStreamDynamic msg, int dim1, int dim2, cons
     }
     return result;
 }
-
-/*********************************
- * Entrance functions for Python *
- *********************************/
-
-// BitStream encode_single_channel_list(int latent[], int dim1, int dim2, const ListCDFTableRaw *p_raw_cdf)
-// {
-//     ListCDFTable cdf(*p_raw_cdf);
-//     return encode_single_channel(latent, dim1, dim2, cdf);
-// }
-
-// BitStream encode_single_channel_gaussian(int latent[], int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
-// {
-//     GaussianCDFTable cdf(*raw_cdf);
-//     return encode_single_channel(latent, dim1, dim2, cdf);
-// }
-
-// const int* decode_single_channel_list(BitStream msg, int dim1, int dim2, const ListCDFTableRaw *raw_cdf)
-// {
-//     ListCDFTable cdf(*raw_cdf);
-//     return decode_single_channel(msg, dim1, dim2, cdf);
-// }
-
-// const int* decode_single_channel_gaussian(BitStream msg, int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
-// {
-//     GaussianCDFTable cdf(*raw_cdf);
-//     return decode_single_channel(msg, dim1, dim2, cdf);
-// }
