@@ -12,7 +12,7 @@ int a[N];
 bool test(int *a, int dim1, int dim2, CDFTable *table) {
     int n = dim1 * dim2;
     cout << "Generated!" << endl;
-    BitStream bits = encode_single_channel(a, dim1, dim2, *table);
+    BitStreamDynamic bits = encode_single_channel(a, dim1, dim2, *table);
     const int* a_hat = decode_single_channel(bits, dim1, dim2, *table);
     int cmp = memcmp(a, a_hat, n*sizeof(int));
     if(cmp != 0) {

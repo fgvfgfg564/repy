@@ -3,74 +3,30 @@
 
 using namespace std;
 
-#define SAFETY_BITS 0
-#define OUTPUT_BITS 13
+int prob_base, first_bit_base, prob_safe;
 
-int start, range, prob_base, first_bit_base, prob_safe;
-char bit_cache;
-int bit_cache_cnt;
-int cur, msg_ind, msg_ind_cache;
-string msg;
-vector<int> result;
-
-void output_bit(char bit) {
-    switch(bit) {
-        case 0:
-            bit_cache <<= 1;
-            bit_cache_cnt ++;
-            break;
-        case 1:
-            bit_cache <<= 1;
-            bit_cache |= 1;
-            bit_cache_cnt ++;
-            break;
-        default:
-            cerr << "FATAL: Invalid bit: " << int(bit) << endl;
-            exit(0);
-    }
-    if(bit_cache_cnt == 8) {
-        msg += bit_cache;
-        bit_cache_cnt = 0;
-    }
+inline void read_bit(int &cur, BitStreamDynamic &bits) {
+    cur = (cur & (first_bit_base - 1)) << 1;
+    unsigned char next_bit=bits.read_bit();
+    cur |= next_bit;
 }
 
-void readbit()
-{
-    int result;
-    if(msg_ind >= msg.length()) {
-        result = 0;
-    }
-    else {
-        result = msg[msg_ind];
-        result &= (1<<msg_ind_cache);
-        result = !(!result);
-    }
-    cur = (cur<<1) | result;
-    if(msg_ind_cache == 0) {
-        msg_ind ++;
-        msg_ind_cache = 7;
-    }
-    else msg_ind_cache --;
-}   
-
-// 若range开头结尾的首个bit一致，则将其输出并整体左移一位
-void emit_bits(bool encode=true) {
+// 若range开头结尾的首个bit一致，则将其输出(encode)/读入下一位(decode)并整体左移一位
+void emit_initio_bits(int &start, int &range, int &cur, BitStreamDynamic &bits, bool encoding) {
     while(start / first_bit_base == (start + range - 1) / first_bit_base) {
         int bit = start / first_bit_base;
-        if(encode){
-            output_bit(bit);
-        }
         start = (start & (first_bit_base - 1)) << 1;
-        if(!encode){
-            cur = cur & (first_bit_base - 1);
-            readbit();
-        }
         range <<= 1;
+        if(encoding)
+            bits.append(bit);
+        else 
+            read_bit(cur, bits);
     }
 }
 
 // 如果range的长度小于字符集长度，会导致概率为0无法编码，因此裁剪一部分range使其能够扩充
-void align_range(int target, bool encode=true) {
+void align_range(int &start, int &range, int target, BitStreamDynamic &bits, bool encoding) {
+    int _;
     while (range < target) {
         int range_l = first_bit_base - start;
         int range_r = range - range_l;
@@ -81,39 +37,19 @@ void align_range(int target, bool encode=true) {
             start += range_l;
             range = range_r;
         }
-        emit_bits(encode);
+        emit_initio_bits(start, range, _, bits, encoding);
     }
 }
 
-void init_enc() {
-    bit_cache_cnt = 0;
-    msg = "";
-}
-
-long long ceiling_div(long long x, long long y)
-{
-    return (x+y-1)/y;
-}
-
 // Entrance functions for python
-BitStream encode_single_channel_list(int latent[], int dim1, int dim2, const ListCDFTableRaw *p_raw_cdf)
-{
-    ListCDFTable cdf(*p_raw_cdf);
-    return encode_single_channel(latent, dim1, dim2, cdf);
-}
-
-BitStream encode_single_channel_gaussian(int latent[], int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
-{
-    GaussianCDFTable cdf(*raw_cdf);
-    return encode_single_channel(latent, dim1, dim2, cdf);
-}
 
 BitStream encode_single_channel(int latent[], int dim1, int dim2, const CDFTable &cdf)
 {
-    init_enc();
-    start = 0;
+    BitStreamDynamic msg;
+    int start = 0;
+    int _;
     int precision = cdf.getPrecision();
-    range = 1 << (precision + SAFETY_BITS + OUTPUT_BITS + 1);
+    int range = 1 << (precision + SAFETY_BITS + OUTPUT_BITS + 1);
     prob_safe = 1 << (precision + SAFETY_BITS);
     prob_base = 1 << precision;
     first_bit_base = 1 << (precision + SAFETY_BITS + OUTPUT_BITS);
@@ -123,67 +59,34 @@ BitStream encode_single_channel(int latent[], int dim1, int dim2, const CDFTable
             int prob_start = cdf(idx, val);
             int prob_end = cdf(idx, val+1);
             // cout << start << ' ' << range << ' ' << prob_start << ' ' << prob_end << endl;
-            start = start + ceiling_div(1ll * range * prob_start, prob_base);
-            range = ceiling_div(1ll * range * prob_end, prob_base) - ceiling_div(1ll * range * prob_start, prob_base);
+            start = start + 1ll * range * prob_start / prob_base;
+            range = 1ll * range * prob_end / prob_base - 1ll * range * prob_start / prob_base;
             
             if(range == 0) {
                 cerr << "FATAL: Probability equals to zero: val=" << val << endl;
                 exit(0);
             }
-            emit_bits();
-            align_range(prob_safe);
+            emit_initio_bits(start, range, _, msg, true);
+            align_range(start, range, prob_safe, msg, true);
         }
     }
-    align_range(first_bit_base << 1);
-    if(bit_cache_cnt != 0)msg += bit_cache << (8 - bit_cache_cnt);
+    // 在当前range中挑选一个最短的数值输出
+    align_range(start, range, first_bit_base << 1, msg, true);
     return BitStream(msg);
 }
 
-void init_dec()
+const int* decode_single_channel(BitStreamDynamic msg, int dim1, int dim2, const CDFTable &cdf)
 {
-    msg_ind = 0;
-    msg_ind_cache = 7;
-    start = 0;
-    range = 1;
-    cur = 0;
-    msg = "";
+    int start = 0, range = 1, cur = 0;
+    vector<int> result;
     result.clear();
-}
-
-void emit_decoder_bits()
-{
-    while(start / first_bit_base == (start + range - 1) / first_bit_base) {
-        int bit = start / first_bit_base;
-        start = (start & (first_bit_base - 1)) << 1;
-        cur = (cur & (first_bit_base - 1)) << 1;
-        range <<= 1;
-    }
-}
-
-const int* decode_single_channel_list(BitStream msg_stream, int dim1, int dim2, const ListCDFTableRaw *raw_cdf)
-{
-    ListCDFTable cdf(*raw_cdf);
-    return decode_single_channel(msg_stream, dim1, dim2, cdf);
-}
-
-const int* decode_single_channel_gaussian(BitStream msg_stream, int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
-{
-    GaussianCDFTable cdf(*raw_cdf);
-    return decode_single_channel(msg_stream, dim1, dim2, cdf);
-}
-
-const int* decode_single_channel(BitStream msg_stream, int dim1, int dim2, const CDFTable &cdf)
-{
-    init_dec();
     int precision = cdf.getPrecision();
-    msg = string(msg_stream.s, msg_stream.length);
-    // cout << "Received msg length: " << msg.size() << " Bytes" << endl;
     prob_safe = 1 << (precision + SAFETY_BITS);
     prob_base = 1 << precision;
     first_bit_base = 1 << (precision + SAFETY_BITS + OUTPUT_BITS);
 
     for(int i=0;i<precision + SAFETY_BITS + OUTPUT_BITS + 1;i++) {
-        readbit();
+        read_bit(cur, msg);
         range <<= 1;
     }
     // cout<<"cur="<<cur<<endl;
@@ -196,11 +99,39 @@ const int* decode_single_channel(BitStream msg_stream, int dim1, int dim2, const
             result.push_back(val);
             int prob_start = cdf(idx, val);
             int prob_end = cdf(idx, val+1);
-            start = start + ceiling_div(1ll * range * prob_start, prob_base);
-            range = ceiling_div(1ll * range * prob_end, prob_base) - ceiling_div(1ll * range * prob_start, prob_base);
-            emit_bits(false);
-            align_range(prob_safe, false);
+            start = start + 1ll * range * prob_start / prob_base;
+            range = 1ll * range * prob_end / prob_base - 1ll * range * prob_start / prob_base;
+            emit_initio_bits(start, range, cur, msg, false);
+            align_range(start, range, prob_safe, msg, false);
         }
     }
     return &(*result.begin());
+}
+
+/*********************************
+ * Entrance functions for Python *
+ *********************************/
+
+BitStream encode_single_channel_list(int latent[], int dim1, int dim2, const ListCDFTableRaw *p_raw_cdf)
+{
+    ListCDFTable cdf(*p_raw_cdf);
+    return encode_single_channel(latent, dim1, dim2, cdf);
+}
+
+BitStream encode_single_channel_gaussian(int latent[], int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
+{
+    GaussianCDFTable cdf(*raw_cdf);
+    return encode_single_channel(latent, dim1, dim2, cdf);
+}
+
+const int* decode_single_channel_list(BitStream msg, int dim1, int dim2, const ListCDFTableRaw *raw_cdf)
+{
+    ListCDFTable cdf(*raw_cdf);
+    return decode_single_channel(msg, dim1, dim2, cdf);
+}
+
+const int* decode_single_channel_gaussian(BitStream msg, int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
+{
+    GaussianCDFTable cdf(*raw_cdf);
+    return decode_single_channel(msg, dim1, dim2, cdf);
 }
