@@ -13,8 +13,9 @@ bool test(int *a, int dim1, int dim2, CDFTable *table) {
     int n = dim1 * dim2;
     cout << "Generated!" << endl;
     BitStreamDynamic bits = encode_single_channel(a, dim1, dim2, *table);
-    const int* a_hat = decode_single_channel(bits, dim1, dim2, *table);
-    int cmp = memcmp(a, a_hat, n*sizeof(int));
+    cout << "Encoding completed!" << endl;
+    vector<int> a_hat = decode_single_channel(bits, dim1, dim2, *table);
+    int cmp = memcmp(a, &(a_hat[0]), n*sizeof(int));
     if(cmp != 0) {
         for(int i=0;i<n;i++) cout<<a[i]<<' ';cout<<endl;
         for(int i=0;i<n;i++) cout<<a_hat[i]<<' ';cout<<endl;
@@ -72,6 +73,7 @@ void testList(int dim1, int dim2, int c, int p) {
 }
 
 void testGaussian(int n, double mu_range, double sigma_range, int p) {
+    cout << "Testing performance on Gaussian Distributions ... " << endl;
     for(;;) {
         double *mu = new double[n];
         double *sigma = new double[n];
@@ -105,5 +107,5 @@ void testGaussian(int n, double mu_range, double sigma_range, int p) {
 int main()
 {
     // testList(5, 5, 3, 4);
-    testGaussian(10000, 0, 0, 16);
+    testGaussian(10000, 10000, 100, 16);
 }

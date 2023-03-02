@@ -25,8 +25,7 @@ void emit_initio_bits(int &start, int &range, int &cur, BitStreamDynamic &bits, 
 }
 
 // 如果range的长度小于字符集长度，会导致概率为0无法编码，因此裁剪一部分range使其能够扩充
-void align_range(int &start, int &range, int target, BitStreamDynamic &bits, bool encoding) {
-    int _;
+void align_range(int &start, int &range, int &cur, int target, BitStreamDynamic &bits, bool encoding) {
     while (range < target) {
         int range_l = first_bit_base - start;
         int range_r = range - range_l;
@@ -37,13 +36,13 @@ void align_range(int &start, int &range, int target, BitStreamDynamic &bits, boo
             start += range_l;
             range = range_r;
         }
-        emit_initio_bits(start, range, _, bits, encoding);
+        emit_initio_bits(start, range, cur, bits, encoding);
     }
 }
 
 // Entrance functions for python
 
-BitStream encode_single_channel(int latent[], int dim1, int dim2, const CDFTable &cdf)
+BitStreamDynamic encode_single_channel(int latent[], int dim1, int dim2, const CDFTable &cdf)
 {
     BitStreamDynamic msg;
     int start = 0;
@@ -64,18 +63,18 @@ BitStream encode_single_channel(int latent[], int dim1, int dim2, const CDFTable
             
             if(range == 0) {
                 cerr << "FATAL: Probability equals to zero: val=" << val << endl;
-                exit(0);
+                exit(-1);
             }
             emit_initio_bits(start, range, _, msg, true);
-            align_range(start, range, prob_safe, msg, true);
+            align_range(start, range, _, prob_safe, msg, true);
         }
     }
     // 在当前range中挑选一个最短的数值输出
-    align_range(start, range, first_bit_base << 1, msg, true);
-    return BitStream(msg);
+    align_range(start, range, _, first_bit_base << 1, msg, true);
+    return msg;
 }
 
-const int* decode_single_channel(BitStreamDynamic msg, int dim1, int dim2, const CDFTable &cdf)
+vector<int> decode_single_channel(BitStreamDynamic msg, int dim1, int dim2, const CDFTable &cdf)
 {
     int start = 0, range = 1, cur = 0;
     vector<int> result;
@@ -93,45 +92,45 @@ const int* decode_single_channel(BitStreamDynamic msg, int dim1, int dim2, const
     for(int idx=0;idx<dim1;idx++) {
         // cout <<idx << endl;
         for(int i=0;i<dim2;i++) {
-            int prob = (1ll * (cur - start) * prob_base) / range;
+            int prob = (1ll * (cur - start + 1) * prob_base - 1) / range;
             int val = cdf.lookup(idx, prob);
-            // cout << start << ' ' << range << ' ' << prob << ' ' << val << endl;
+            // cout << start << ' ' << range << ' ' << cur << ' ' << prob << ' ' << val << endl;
             result.push_back(val);
             int prob_start = cdf(idx, val);
             int prob_end = cdf(idx, val+1);
             start = start + 1ll * range * prob_start / prob_base;
             range = 1ll * range * prob_end / prob_base - 1ll * range * prob_start / prob_base;
             emit_initio_bits(start, range, cur, msg, false);
-            align_range(start, range, prob_safe, msg, false);
+            align_range(start, range, cur, prob_safe, msg, false);
         }
     }
-    return &(*result.begin());
+    return result;
 }
 
 /*********************************
  * Entrance functions for Python *
  *********************************/
 
-BitStream encode_single_channel_list(int latent[], int dim1, int dim2, const ListCDFTableRaw *p_raw_cdf)
-{
-    ListCDFTable cdf(*p_raw_cdf);
-    return encode_single_channel(latent, dim1, dim2, cdf);
-}
+// BitStream encode_single_channel_list(int latent[], int dim1, int dim2, const ListCDFTableRaw *p_raw_cdf)
+// {
+//     ListCDFTable cdf(*p_raw_cdf);
+//     return encode_single_channel(latent, dim1, dim2, cdf);
+// }
 
-BitStream encode_single_channel_gaussian(int latent[], int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
-{
-    GaussianCDFTable cdf(*raw_cdf);
-    return encode_single_channel(latent, dim1, dim2, cdf);
-}
+// BitStream encode_single_channel_gaussian(int latent[], int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
+// {
+//     GaussianCDFTable cdf(*raw_cdf);
+//     return encode_single_channel(latent, dim1, dim2, cdf);
+// }
 
-const int* decode_single_channel_list(BitStream msg, int dim1, int dim2, const ListCDFTableRaw *raw_cdf)
-{
-    ListCDFTable cdf(*raw_cdf);
-    return decode_single_channel(msg, dim1, dim2, cdf);
-}
+// const int* decode_single_channel_list(BitStream msg, int dim1, int dim2, const ListCDFTableRaw *raw_cdf)
+// {
+//     ListCDFTable cdf(*raw_cdf);
+//     return decode_single_channel(msg, dim1, dim2, cdf);
+// }
 
-const int* decode_single_channel_gaussian(BitStream msg, int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
-{
-    GaussianCDFTable cdf(*raw_cdf);
-    return decode_single_channel(msg, dim1, dim2, cdf);
-}
+// const int* decode_single_channel_gaussian(BitStream msg, int dim1, int dim2, const GaussianCDFTableRaw *raw_cdf)
+// {
+//     GaussianCDFTable cdf(*raw_cdf);
+//     return decode_single_channel(msg, dim1, dim2, cdf);
+// }

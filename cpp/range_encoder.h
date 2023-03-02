@@ -7,64 +7,65 @@
 #include <bits/stdc++.h>
 #include "CDFTable.h"
 
-struct BitStream;
+// struct BitStream;
 
 struct BitStreamDynamic
 {
     vector<unsigned char> s;
-    int input_cnt, input_ind, output_cnt, output_ind;
-    BitStreamDynamic(): input_ind(0), output_ind(7), input_cnt(0), output_cnt(0) {s.push_back(0);}
-    BitStreamDynamic(const BitStream &_s);
+    int input_bias, input_ind, output_ind, output_bias;
+    BitStreamDynamic(): input_bias(7), output_bias(7), input_ind(0), output_ind(0) {s.push_back(0);}
+    // BitStreamDynamic(const BitStream &_s);
     void append(int bit) {
         if(bit != 0 && bit != 1) {
             cerr << "FATAL: Invalid bit: " << int(bit) << endl;
-            exit(0);
+            exit(-1);
         }
-        s[input_ind] <<= 1;
+        bit <<= input_bias;
         s[input_ind] |= bit;
-        input_cnt ++;
-        if(input_cnt == 8) {
+        if(input_bias == 0) {
             s.push_back(0);
-            input_cnt = 0;
+            input_bias = 7;
             input_ind ++;
         }
+        else
+            input_bias --;
     }
     unsigned char read_bit() {
         unsigned char result;
-        if(output_cnt >= s.size()) {
+        if(output_ind >= s.size()) {
             result = 0;
         }
         else {
-            result = s[output_cnt];
-            result &= (1<<output_ind);
+            result = s[output_ind];
+            result &= (1<<output_bias);
             result = !(!result);
         }
-        if(output_ind == 0) {
-            output_cnt ++;
-            output_ind = 7;
+        if(output_bias == 0) {
+            output_ind ++;
+            output_bias = 7;
         }
-        else output_ind --;
+        else output_bias --;
         return result;
     }
     void reset_iter() {
-        output_cnt = 0;
         output_ind = 0;
+        output_bias = 0;
     }
 };
 
-struct BitStream
-{
-    int length;
-    char *s;
-    BitStream(const BitStreamDynamic &_s): length(_s.s.size()) {
-        s = new char[length];
-        memcpy(s, &(_s.s[0]), length);
-    }
-};
+// struct BitStream
+// {
+//     int length;
+//     char *s;
+//     BitStream(const BitStreamDynamic &_s): length(_s.s.size()) {
+//         s = new char[length];
+//         memcpy(s, &(_s.s[0]), length);
+//     }
+// };
 
-BitStreamDynamic::BitStreamDynamic(const BitStream &_s): input_ind(0), output_ind(7), input_cnt(0), output_cnt(0), s(_s.s, _s.s + _s.length) {}
+// BitStreamDynamic::BitStreamDynamic(const BitStream &_s): input_bias(7), output_bias(7), input_ind(0), output_ind(0), s(_s.s, _s.s + _s.length) {}
 
-BitStream encode_single_channel(int [], int, int, const CDFTable&);
-const int* decode_single_channel(BitStreamDynamic, int, int, const CDFTable&);
+BitStreamDynamic encode_single_channel(int [], int, int, const CDFTable&);
+vector<int> decode_single_channel(BitStreamDynamic, int, int, const CDFTable&);
 
 #endif
