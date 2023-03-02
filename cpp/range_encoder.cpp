@@ -14,7 +14,6 @@ string msg;
 vector<int> result;
 
 void output_bit(char bit) {
-    // cout<<"output bit: "<<int(bit)<<endl;
     switch(bit) {
         case 0:
             bit_cache <<= 1;
@@ -30,7 +29,6 @@ void output_bit(char bit) {
             exit(0);
     }
     if(bit_cache_cnt == 8) {
-        //cout<<"output: "<<int(bit_cache)<<endl;
         msg += bit_cache;
         bit_cache_cnt = 0;
     }
@@ -47,7 +45,6 @@ void readbit()
         result &= (1<<msg_ind_cache);
         result = !(!result);
     }
-    // cout << "Read bit: " << result << ' ' << msg.length() << ' ' << msg_ind << endl;
     cur = (cur<<1) | result;
     if(msg_ind_cache == 0) {
         msg_ind ++;
@@ -56,22 +53,11 @@ void readbit()
     else msg_ind_cache --;
 }   
 
+// 若range开头结尾的首个bit一致，则将其输出并整体左移一位
 void emit_bits(bool encode=true) {
     while(start / first_bit_base == (start + range - 1) / first_bit_base) {
-        // printf("%x, %x, %x\n", start, range, first_bit_base);
         int bit = start / first_bit_base;
         if(encode){
-            // int bit_reverse = 0;
-            // int cnt = 0;
-            // do {
-            //     bit_reverse = (bit_reverse << 1) | (bit & 1);
-            //     bit >>= 1;
-            //     cnt += 1;
-            // } while(bit);
-            // for(int i=0;i<cnt;i++){
-            //     output_bit(bit_reverse & 1);
-            //     bit_reverse >>= 1;
-            // }
             output_bit(bit);
         }
         start = (start & (first_bit_base - 1)) << 1;
@@ -80,10 +66,10 @@ void emit_bits(bool encode=true) {
             readbit();
         }
         range <<= 1;
-        // printf(" - %x, %x, %x\n", start, range, first_bit_base);
     }
 }
 
+// 如果range的长度小于字符集长度，会导致概率为0无法编码，因此裁剪一部分range使其能够扩充
 void align_range(int target, bool encode=true) {
     while (range < target) {
         int range_l = first_bit_base - start;
@@ -109,6 +95,7 @@ long long ceiling_div(long long x, long long y)
     return (x+y-1)/y;
 }
 
+// Entrance functions for python
 BitStream encode_single_channel_list(int latent[], int dim1, int dim2, const ListCDFTableRaw *p_raw_cdf)
 {
     ListCDFTable cdf(*p_raw_cdf);
