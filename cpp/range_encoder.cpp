@@ -52,10 +52,10 @@ BitStreamDynamic encode_single_channel(int latent[], int dim1, int dim2, const C
     for(int idx=0;idx<dim1;idx++){
         for(int i=0;i<dim2;i++) {
             int val = latent[idx * dim2 + i];
-            int prob_start = cdf(idx, val);
+            int prob_start = cdf(idx, val);     // 从概率分布表中提取值inx对应的概率区间
             int prob_end = cdf(idx, val+1);
-            start = start + 1ll * range * prob_start / prob_base;
-            range = 1ll * range * prob_end / prob_base - 1ll * range * prob_start / prob_base;
+            start = ((start + 1ll * range * prob_start)) >> precision;
+            range = (1ll * range * (prob_end - prob_start)) >> precision;
             
             if(range == 0) {
                 cerr << "FATAL: Probability equals to zero: val=" << val << endl;
@@ -65,7 +65,7 @@ BitStreamDynamic encode_single_channel(int latent[], int dim1, int dim2, const C
             align_range(start, range, _, prob_base, msg, first_bit_base, true);
         }
     }
-    // 在当前range中挑选一个最短的数值输出
+    // 输出当前range中剩余的值
     align_range(start, range, _, first_bit_base << 1, msg, first_bit_base, true);
     return msg;
 }
@@ -85,14 +85,14 @@ vector<int> decode_single_channel(BitStreamDynamic msg, int dim1, int dim2, cons
     }
     for(int idx=0;idx<dim1;idx++) {
         for(int i=0;i<dim2;i++) {
-            int prob = (1ll * (cur - start + 1) * prob_base - 1) / range;
+            int prob = (1ll * (cur - start + 1) * prob_base - 1) / range;   // 从输入的数值反推其位于哪个值的概率区间内
             int val = cdf.lookup(idx, prob);
             result.push_back(val);
             int prob_start = cdf(idx, val);
             int prob_end = cdf(idx, val+1);
-            start = start + 1ll * range * prob_start / prob_base;
-            range = 1ll * range * prob_end / prob_base - 1ll * range * prob_start / prob_base;
-            emit_initio_bits(start, range, cur, msg, first_bit_base, false);
+            start = ((start + 1ll * range * prob_start)) >> precision;
+            range = (1ll * range * (prob_end - prob_start)) >> precision;
+            emit_initio_bits(start, range, cur, msg, first_bit_base, false);    // 求出新的range，与编码端一致
             align_range(start, range, cur, prob_base, msg, first_bit_base, false);
         }
     }
