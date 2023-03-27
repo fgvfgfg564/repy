@@ -6,10 +6,7 @@ using namespace std;
 
 #define GAUSSIAN_VALID_RANGE 12
 
-double normalCDF(double value)
-{
-    return 0.5 * erfc(-value * M_SQRT1_2);
-}
+double normalCDF(double value);
 
 /*
  * Contains multiple CDF Tables

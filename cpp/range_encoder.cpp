@@ -1,4 +1,4 @@
-#include "range_encoder.h"
+#include "bitstream.h"
 #include "CDFTable.h"
 
 using namespace std;

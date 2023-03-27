@@ -121,9 +121,9 @@ class ListCDFTable(CDFTable):
         self.maxv_c = np.ctypeslib.as_ctypes(maxv)
         self.minv_c = np.ctypeslib.as_ctypes(minv)
 
-        self.f_encode = clib._Z26encode_single_channel_listPiiiPK15ListCDFTableRaw
+        self.f_encode = clib._Z21encode_listcdf_pyfuncPiiiP15ListCDFTableRaw
         self.f_decode = (
-            clib._Z26decode_single_channel_list9BitStreamiiPK15ListCDFTableRaw
+            clib._Z21decode_listcdf_pyfunc9BitStreamiiP15ListCDFTableRaw
         )
 
     def get_ctype(self):
@@ -151,7 +151,6 @@ class ListCDFTable(CDFTable):
         return inputs
 
 
-
 class GaussianCDFTable(CDFTable):
     """
     Data structure to maintain a gaussian entropy bottleneck
@@ -173,10 +172,10 @@ class GaussianCDFTable(CDFTable):
         self.sigma_c = np.ctypeslib.as_ctypes(sigma)
 
         self.f_encode = (
-            clib._Z30encode_single_channel_gaussianPiiiPK19GaussianCDFTableRaw
+            clib._Z22encode_gaussian_pyfuncPiiiP19GaussianCDFTableRaw
         )
         self.f_decode = (
-            clib._Z30decode_single_channel_gaussian9BitStreamiiPK19GaussianCDFTableRaw
+            clib._Z22decode_gaussian_pyfunc9BitStreamiiP19GaussianCDFTableRaw
         )
 
     def get_ctype(self):
