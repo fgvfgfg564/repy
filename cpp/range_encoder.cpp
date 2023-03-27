@@ -87,8 +87,8 @@ BitStreamDynamic encode_single_channel(int latent[], int dim1, int dim2, const C
             align_range_encode(start, range, prob_base, msg, first_bit_base);
         }
     }
-    // 输出当前range中剩余的值
-    align_range_encode(start, range, first_bit_base << 1, msg, first_bit_base);
+    // 编码结束，剩余range一定横跨 1<<first_bit_base 点，在码流中额外给出一个1
+    msg.append(1);
     return msg;
 }
 
