@@ -4,7 +4,7 @@
 
 using namespace std;
 
-#define GAUSSIAN_VALID_RANGE 12
+#define GAUSSIAN_VALID_RANGE 6
 
 double normalCDF(double value);
 
