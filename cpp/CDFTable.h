@@ -4,6 +4,8 @@
 
 using namespace std;
 
+#define GAUSSIAN_VALID_RANGE 12
+
 double normalCDF(double value)
 {
     return 0.5 * erfc(-value * M_SQRT1_2);
@@ -99,8 +101,8 @@ public:
             cerr << "CDF table index out of range: " << idx << endl;
             exit(-1);
         }
-        int minv = floor(_mu[idx] - 6 * _sigma[idx]);
-        int maxv = ceil(_mu[idx] + 6 * _sigma[idx]);
+        int minv = floor(_mu[idx] - GAUSSIAN_VALID_RANGE * _sigma[idx]);
+        int maxv = ceil(_mu[idx] + GAUSSIAN_VALID_RANGE * _sigma[idx]);
         if (x < minv || x > maxv + 1) {
             cerr << "Gaussian value out of range: " << x << endl;
             cerr << " - mu = " << _mu[idx] << "; sigma = " << _sigma[idx] << "." << endl;
@@ -118,8 +120,8 @@ public:
             exit(-1);
         }
         
-        int minv = floor(_mu[idx] - 6 * _sigma[idx]);
-        int maxv = ceil(_mu[idx] + 6 * _sigma[idx]);
+        int minv = floor(_mu[idx] - GAUSSIAN_VALID_RANGE * _sigma[idx]);
+        int maxv = ceil(_mu[idx] + GAUSSIAN_VALID_RANGE * _sigma[idx]);
 
         int l = minv;
         int r = maxv + 2;

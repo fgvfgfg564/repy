@@ -12,6 +12,13 @@ bool test(int *a, int dim1, int dim2, CDFTable *table) {
     cout << "Generated!" << endl;
     BitStreamDynamic bits = encode_single_channel(a, dim1, dim2, *table);
     cout << "Encoding completed!" << endl;
+
+    auto iter=bits.iter();
+    for(int i=0;i<100;i++){
+        cout<<(int)iter.next();
+    }
+    cout<<endl;
+
     vector<int> a_hat = decode_single_channel(bits, dim1, dim2, *table);
     int cmp = memcmp(a, &(a_hat[0]), n*sizeof(int));
     if(cmp != 0) {
@@ -90,8 +97,8 @@ void testGaussian(int n, double mu_range, double sigma_range, int p) {
         //     cout << table.lookup(2, i) << endl;
         // }
         for(int i=0;i<n;i++) {
-            int mi = floor(mu[i] - 6 * sigma[i]);
-            int mx = ceil(mu[i] + 6 * sigma[i]);
+            int mi = floor(mu[i] - 12 * sigma[i]);
+            int mx = ceil(mu[i] + 12 * sigma[i]);
             a[i] = mi + rand() % (mx - mi + 1);
         }
         if(test(a, n, 1, &table)) {
@@ -107,5 +114,5 @@ void testGaussian(int n, double mu_range, double sigma_range, int p) {
 int main()
 {
     // testList(5, 5, 3, 4);
-    testGaussian(10000000, 10000, 100, 16);
+    testGaussian(1000000, 10000, 100, 16);
 }
