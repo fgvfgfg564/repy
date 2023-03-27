@@ -45,7 +45,7 @@ struct BitStreamDynamicIterator
     BitStreamDynamicIterator(BitStreamDynamic *b): _b(b), ind(0), bias(7) {}
     unsigned char next() {
         unsigned char result;
-        if(ind > _b->ind) {
+        if(ind > _b->ind || (ind == _b->ind && bias <= _b->bias)) {
             result = 0;
         }
         else {
