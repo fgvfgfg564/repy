@@ -1,10 +1,11 @@
+import os
+import time
+import warnings
 from ctypes import *
 from math import log2
 from random import randint
-import time
+
 import numpy as np
-import os
-import warnings
 
 from .utils import *
 
